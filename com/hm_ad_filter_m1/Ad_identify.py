@@ -69,7 +69,6 @@ class AdIdentify(BaseHandler):
                 ret = {"type": "error", "error_msg": "文章标题经处理后，词量为0。"}
                 self.write(json.dumps(ret))
                 return
-            print(title_cut)
 
             doc_cut = list(jieba.cut(doc))
             doc_dp = [word.lower() for word in doc_cut if word not in stop_words]
@@ -77,12 +76,9 @@ class AdIdentify(BaseHandler):
                 ret = {"type": "error", "error_msg": "文章正文经处理后，词量为0。"}
                 self.write(json.dumps(ret))
                 return
-            print(doc_cut)
 
             ad_title = [i for i in title_dp if i in ads]
             ad_doc = [i for i in doc_dp if i in ads]
-            print(ad_title)
-            print(ad_doc)
             x = round(len(ad_title) / len(title_dp), 3)
             y = round(len(ad_doc) / len(doc_dp), 3)
             res = 40 * x + 60 * y
