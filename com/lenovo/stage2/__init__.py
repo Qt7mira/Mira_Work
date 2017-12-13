@@ -2,46 +2,32 @@ import pymysql
 import jieba
 from collections import Counter
 
-list_L = []
-list_M = []
-list_H = []
-conn = pymysql.connect(host='60.205.171.171', user='root', password='123456', database='lenovo_ml_test')
-cur = conn.cursor()
-cur.execute("SELECT t.description from incident_L t ")
-results = cur.fetchall()
-for row in results:
-    list_L.extend(jieba.lcut(str(row).lower()))
-cur.close()
 
-cur = conn.cursor()
-cur.execute("SELECT t.description from incident_M t ")
-results = cur.fetchall()
-for row in results:
-    list_M.extend(jieba.lcut(str(row).lower()))
-cur.close()
+def read_from_mysql(table_name):
+    list = []
+    conn = pymysql.connect(host='60.205.171.171', user='root', password='123456', database='lenovo_ml_test')
+    cur = conn.cursor()
+    cur.execute("SELECT t.description from " + table_name + " t ")
+    results = cur.fetchall()
+    for row in results:
+        list.extend(jieba.lcut(str(row).lower()))
+    cur.close()
+    conn.close()
+    return list
 
-cur = conn.cursor()
-cur.execute("SELECT t.description from incident_H t ")
-results = cur.fetchall()
-for row in results:
-    list_H.extend(jieba.lcut(str(row).lower()))
-cur.close()
-conn.close()
 
-file_object = open('incident_L.txt', 'w', encoding='utf-8')
-for k, v in Counter(list_L).items():
-    file_object.write(str(k) + "\t" + str(v))
-    file_object.write('\n')
-file_object.close()
+def save_data2file(path, list):
+    file_object = open(path, 'w', encoding='utf-8')
+    for k, v in Counter(list).items():
+        file_object.write(str(k) + "\t" + str(v))
+        file_object.write('\n')
+    file_object.close()
 
-file_object = open('incident_M.txt', 'w', encoding='utf-8')
-for k, v in Counter(list_M).items():
-    file_object.write(str(k) + "\t" + str(v))
-    file_object.write('\n')
-file_object.close()
 
-file_object = open('incident_H.txt', 'w', encoding='utf-8')
-for k, v in Counter(list_H).items():
-    file_object.write(str(k) + "\t" + str(v))
-    file_object.write('\n')
-file_object.close()
+list_L = read_from_mysql("incident_L")
+list_M = read_from_mysql("incident_M")
+list_H = read_from_mysql("incident_H")
+
+save_data2file("'incident_L.txt'", list_L)
+save_data2file("'incident_M.txt'", list_M)
+save_data2file("'incident_H.txt'", list_H)
