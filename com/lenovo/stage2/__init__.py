@@ -1,3 +1,6 @@
+"""
+浏览数据
+"""
 import pymysql
 import jieba
 from collections import Counter

@@ -1,3 +1,6 @@
+"""
+tf_idf + bayes   p = 0.86
+"""
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -17,12 +20,14 @@ try:
     max_len = 500
     jieba.load_userdict("data/tb_dictionary.txt")
 
+
     def read_file_data2list(path):
         list = []
         file = open(path, 'r', encoding='utf8')
         for line in file.readlines():
             list.append(line.replace('\n', ''))
         return list
+
 
     stops = read_file_data2list('data/stops.txt')
     re_words = read_file_data2list('data/re.txt')
@@ -31,16 +36,19 @@ try:
     for line in file.readlines():
         word2id = json.loads(line)
 
+
     def doc2num(s):
         s = [w for w in s if w not in stops]
         s = [w for w in s if w not in re_words]
         s = [word2id.get(i, 0) for i in s[:max_len]]
         return s + [0] * (max_len - len(s))
 
+
     def doc_dp(s):
         s = [w for w in s if w not in stops]
         s = [w for w in s if w not in re_words]
         return str(s)
+
 
     def rank2num(rank):
         if rank == "L":
@@ -49,6 +57,7 @@ try:
             return 2
         else:
             return 3
+
 
     def some_dp(s):
         return str(s).lower()

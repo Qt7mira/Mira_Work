@@ -1,4 +1,6 @@
-# from __future__ import division
+"""
+生成一个简单的全词表
+"""
 import pandas as pd
 import jieba
 import pymysql

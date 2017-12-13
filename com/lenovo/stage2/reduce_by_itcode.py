@@ -1,4 +1,6 @@
-import jieba
+"""
+做类似spark的reduceByKey操作
+"""
 import pymysql
 
 all_incident = {}

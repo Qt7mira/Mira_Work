@@ -1,36 +1,28 @@
+"""
+找到三个分类中相同的词，存储为重复词表 re_words
+"""
 import pymysql
 import jieba
 
-list_L = []
-list_M = []
-list_H = []
 jieba.load_userdict("data/tb_dictionary.txt")
-conn = pymysql.connect(host='60.205.171.171', user='root', password='123456', database='lenovo_ml_test')
-cur = conn.cursor()
-cur.execute("SELECT t.description from incident_L t ")
-results = cur.fetchall()
-for row in results:
-    list_L.extend(jieba.lcut(str(row).lower()))
-cur.close()
 
-cur = conn.cursor()
-cur.execute("SELECT t.description from incident_M t ")
-results = cur.fetchall()
-for row in results:
-    list_M.extend(jieba.lcut(str(row).lower()))
-cur.close()
 
-cur = conn.cursor()
-cur.execute("SELECT t.description from incident_H t ")
-results = cur.fetchall()
-for row in results:
-    list_H.extend(jieba.lcut(str(row).lower()))
-cur.close()
-conn.close()
+def read_from_mysql(table_name):
+    list = []
+    conn = pymysql.connect(host='60.205.171.171', user='root', password='123456', database='lenovo_ml_test')
+    cur = conn.cursor()
+    cur.execute("SELECT t.description from " + table_name + " t ")
+    results = cur.fetchall()
+    for row in results:
+        list.extend(jieba.lcut(str(row).lower()))
+    cur.close()
+    conn.close()
+    return list
 
-list_L = set(list_L)
-list_M = set(list_M)
-list_H = set(list_H)
+
+list_L = set(read_from_mysql("incident_L"))
+list_M = set(read_from_mysql("incident_M"))
+list_H = set(read_from_mysql("incident_H"))
 
 re = set([w for w in list_L if w in list_M and w in list_H])
 

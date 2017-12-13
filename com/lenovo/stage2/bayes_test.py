@@ -1,3 +1,6 @@
+"""
+全词表 + bayes   p = 0.465
+"""
 from pymongo import MongoClient
 import numpy as np
 import pandas as pd
