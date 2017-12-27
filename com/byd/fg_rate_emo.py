@@ -45,17 +45,6 @@ for i in cut_sent:
 
 print("匹配完成，开始写入文件")
 
-# out_xl = xlwt.Workbook(encoding='utf-8')
-# table_out = out_xl.add_sheet('分析结果', cell_overwrite_ok=True)
-#
-
-#
-# for i in range():
-#     table_out.write(row_out, 0, )
-#
-#     row_out += 1
-# out_xl.save("C:/Users/Administrator/Desktop/匹配结果.xlsx")
-
 out_wb = Workbook()
 out_ws = out_wb.create_sheet(title="result")
 
