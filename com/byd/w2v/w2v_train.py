@@ -8,15 +8,18 @@ begin = datetime.datetime.now()
 
 class Sentences:
     def __iter__(self):
-        with open('w2v.txt', 'r', encoding='utf-8') as f:
+        with open('model/w2v_test.txt', 'r', encoding='utf-8') as f:
             for line in f:
-                yield line.lower().strip()
+                yield list(line.lower().strip().split(" "))
 
-word2vec = gensim.models.word2vec.Word2Vec(Sentences(), size=256, window=10, min_count=5, sg=1, hs=1, iter=10, workers=25)
-word2vec.save('word2vec_test.m')
+word2vec = gensim.models.word2vec.Word2Vec(Sentences(), size=256, window=10, min_count=10, sg=0, hs=1, iter=10, workers=25)
+
+word2vec.save('model/word2vec_test_2.model')
 
 end = datetime.datetime.now()
 print("共耗时：" + str(end - begin))
 
-print(word2vec.most_similar('比亚迪'))
-print(word2vec.most_similar('疝气大灯'))
+# print(word2vec.most_similar('比亚迪'))
+# print(word2vec.most_similar('疝气大灯'))
+
+
