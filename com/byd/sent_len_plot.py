@@ -13,14 +13,15 @@ print(content_len[0:10])
 x = []
 y = []
 count = 0
+limit = 200
 for k, v in Counter(content_len).items():
-    if k < 200:
+    if k < limit:
         x.append(k)
         y.append(v)
         count += v
         print(str(k) + "\t" + str(v))
 
-print(" aaaa   "+str(count))
+print("长度小于"+str(limit)+"的句子数为："+str(count))
 plt.bar(x, y, 0.4, color="blue")
 plt.xlabel("Sentences Length")
 plt.ylabel("Count")
