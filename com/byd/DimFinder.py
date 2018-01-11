@@ -14,7 +14,7 @@ class DimFinder(object):
 
         begin = datetime.datetime.now()
         jieba.load_userdict("C:/Users/Administrator/Desktop/aaa.txt")
-        wd = pd.read_excel("C:/Users/Administrator/Desktop/维度20180109.xlsx", sheetname="Sheet1")
+        wd = pd.read_excel("C:/Users/Administrator/Desktop/维度20180111.xlsx", sheetname="Sheet1")
         self.wd_index = wd['d_id']
         self.wd_col_1 = wd['4rank']
         wd_col_2 = wd['desc']
@@ -35,9 +35,10 @@ class DimFinder(object):
 
         self.no_re_wd_words = set(no_re_wd_words)
 
-        self.wd_sim_word = pd.read_excel("C:/Users/Administrator/Desktop/维度20180109.xlsx", sheetname="Sheet2")
+        self.wd_sim_word = pd.read_excel("C:/Users/Administrator/Desktop/维度20180111.xlsx", sheetname="Sheet2")
 
         self.dict_sim_word = {}
+
         for i in range(len(self.wd_sim_word)):
             value_list = []
             value_list.append(str(self.wd_sim_word['key'][i]).lower().strip())
@@ -46,6 +47,7 @@ class DimFinder(object):
                     value_list.append(str(j).lower().strip())
             self.dict_sim_word[str(self.wd_sim_word['key'][i]).lower().strip()] = value_list
 
+        self.dict_all_keys = [k for k, v in self.dict_sim_word.items()]
         # for k, v in self.dict_sim_word.items():
         #     print(str(k) + "\t" + str(v))
 
@@ -90,9 +92,10 @@ class DimFinder(object):
                 res_str = ""
                 count = 0
                 for k in range(len(self.wd_col_2[j])):
-                    if len(set(self.dict_sim_word[self.wd_col_2[j][k]]) & set(content_cut[i])) != 0:
-                        count += 1
-                        res_str += str(set(self.dict_sim_word[self.wd_col_2[j][k]]) & set(content_cut[i]))
+                    if self.wd_col_2[j][k] in self.dict_all_keys:
+                        if len(set(self.dict_sim_word[self.wd_col_2[j][k]]) & set(content_cut[i])) != 0:
+                            count += 1
+                            res_str += str(set(self.dict_sim_word[self.wd_col_2[j][k]]) & set(content_cut[i]))
 
                 if count == len(self.wd_col_2[j]):
                     res['wd'] = self.wd_col_1[j]
