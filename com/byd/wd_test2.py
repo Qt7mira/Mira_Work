@@ -15,13 +15,17 @@ def str_dp2(str1):
 
 def cut_short_sentences(data_list):
     sentence_list = []
+    # for data in data_list:
+    #     if len(data) > 30:
+    #         for s in re.split('。|！|？|；| |>|【|】| |；|：', data):
+    #             if len(s) != 0:
+    #                 sentence_list.append(s)
+    #     else:
+    #         sentence_list.append(data)
     for data in data_list:
-        if len(data) > 30:
-            for s in re.split('。|！|？|；| |>|【|】| |；|：', data):
-                if len(s) != 0:
-                    sentence_list.append(s)
-        else:
-            sentence_list.append(data)
+        for s in re.split('。|！|？|；| |>|【|】| |;|：|，|,', data):
+            if len(s) != 0:
+                sentence_list.append(s)
     return sentence_list
 
 
@@ -71,8 +75,8 @@ for i in range(len(wd_sim_word)):
             value_list.append(str(j).lower().strip())
     dict_sim_word[str(wd_sim_word['key'][i]).lower().strip()] = value_list
 
-# for k, v in dict_sim_word.items():
-#     print(str(k) + "\t" + str(v))
+for k, v in dict_sim_word.items():
+    print(str(k) + "\t" + str(v))
 
 step1 = datetime.datetime.now()
 print("读取+处理数据用时：" + str(step1 - begin))
@@ -95,31 +99,27 @@ for i in range(len(content_cut)):
             break
 
         res_str = ""
+        count = 0
         for k in range(len(wd_col_2[j])):
-            diff1 = len(res_str)
-            count = len(set(dict_sim_word[wd_col_2[j][k]]) & set(content_cut[i]))
-            if count == 0:
-                break
-            res_str += str(set(dict_sim_word[wd_col_2[j][k]]) & set(content_cut[i]))
-            diff2 = len(res_str)
-            if diff2 <= diff1:
-                break
+            if len(set(dict_sim_word[wd_col_2[j][k]]) & set(content_cut[i])) != 0:
+                count += 1
+                res_str += str(set(dict_sim_word[wd_col_2[j][k]]) & set(content_cut[i]))
 
+        if count == len(wd_col_2[j]):
             res['wd'] = wd_col_1[j]
             res['wd_desc'] = res_str
             res['wd_index'] = wd_index[j]
             break
-
+    result.append(res)
     if i % 10 == 0:
         print(i)
-    result.append(res)
 
 step2 = datetime.datetime.now()
 print("匹配维度用时：" + str(step2 - step1))
 
 result_df = pd.DataFrame(result)
 # print(result_df)
-result_df.to_excel("C:/Users/Administrator/Desktop/result_0109.xlsx")
+result_df.to_excel("C:/Users/Administrator/Desktop/result_0109_12.xlsx")
 stop = datetime.datetime.now()
 print("写入excel用时" + str(stop - step2))
 print("总共用时" + str(stop - begin))
