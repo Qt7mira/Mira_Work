@@ -110,10 +110,7 @@ class DimFinder(object):
         result_df = pd.DataFrame(result)
         return result
 
-# aaa = DimFinder()
-# # content = np.array(pd.read_excel("C:/Users/Administrator/Desktop/autohome_bbs_2017-08-07.xlsx")['G'][0:2]).tolist()
-# content = ["比亚迪宋都是我的", "是挺不错的", "相对于唐的车还可以", "都是我的奔驰", "其实都可以", "唐比宋", "我的"]
-# # for i in content:
-# #     bbb = aaa.find_dim(i)
-# # print(bbb)
-# print(aaa.find_dim(content))
+aaa = DimFinder()
+# content = np.array(pd.read_excel("C:/Users/Administrator/Desktop/autohome_bbs_2017-08-07.xlsx")['G'][0:2]).tolist()
+content = ["比亚迪宋都是我的", "是挺不错的", "相对于唐的车还可以", "都是我的奔驰", "其实都可以", "唐比宋", "我的"]
+print(aaa.find_dim(content))
