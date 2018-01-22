@@ -4,7 +4,8 @@ from pyspark import SparkContext
 from pyspark.streaming.kafka import KafkaUtils
 from pyspark.streaming import StreamingContext
 import datetime
-from AlgStart import AlgStart
+import gc
+from AlgStart2 import AlgStart
 alg = AlgStart()
 
 
@@ -12,11 +13,15 @@ def write2es(rdd):
     try:
         id = str(rdd).split("@@@@")[0]
         website = str(rdd).split("@@@@")[1]
-        context = str(rdd).split("@@@@")[2]
+        bbs_name = str(rdd).split("@@@@")[2]
+        context = str(rdd).split("@@@@")[3]
+
         es = Elasticsearch('101.89.68.208:9200')
-        result = alg.start(website, context)
-        es.index(index="test_index_2", doc_type="article", id=id,
+        result = alg.start(website=website, thread_context=context, bbs_name=bbs_name)
+        es.index(index="test_index_4", doc_type="article", id=id,
                  body={"result": result})
+        del id, website, context, bbs_name, rdd
+        gc.collect()
     except Exception as e:
         print(e)
 
@@ -45,5 +50,7 @@ stop = datetime.datetime.now()
 print("读存用时：" + str(stop-step1))
 print("查数用时：" + str(stop-start))
 sc.stop()
+
+
 
 

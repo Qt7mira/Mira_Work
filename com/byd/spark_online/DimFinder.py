@@ -12,9 +12,9 @@ class DimFinder(object):
         def str_dp(str1, sym):
             return list(str(str1).strip().lower().split(sym))
 
-        # begin = datetime.datetime.now()
-        jieba.load_userdict("../data/aaa.txt")
-        wd = pd.read_excel("../data/dim20180112.xlsx", sheetname="Sheet1")
+        begin = datetime.datetime.now()
+        jieba.load_userdict("aaa.txt")
+        wd = pd.read_excel("dim20180118.xlsx", sheetname="Sheet1")
         self.wd_index = wd['d_id']
         self.wd_col_1 = wd['4rank']
         wd_col_2 = wd['desc']
@@ -22,6 +22,10 @@ class DimFinder(object):
 
         self.wd_col_2 = pd.Series(wd_col_2).apply(str_dp, sym=" ")
         self.wd_col_3 = pd.Series(wd_col_3).apply(str_dp, sym=";")
+
+        self.dim_type = wd['dim_type']
+        self.dim_father = wd['dim_father']
+        self.weight = wd['weight']
 
         no_re_wd_words = []
         for line in self.wd_col_2:
@@ -35,7 +39,7 @@ class DimFinder(object):
 
         self.no_re_wd_words = set(no_re_wd_words)
 
-        self.wd_sim_word = pd.read_excel("../data/dim20180112.xlsx", sheetname="Sheet2")
+        self.wd_sim_word = pd.read_excel("dim20180118.xlsx", sheetname="Sheet2")
 
         self.dict_sim_word = {}
 
@@ -54,41 +58,71 @@ class DimFinder(object):
         # step1 = datetime.datetime.now()
         # print("拉取维度数据用时：" + str(step1 - begin))
 
-    def find_dim(self, every_comment):
-
-        def cut_short_sentences(every_str):
-            sentence_list = []
-            for s in re.split('。|！|？|；| |>|【|】| |;|：|，|,', every_str):
-                if len(s) != 0:
-                    sentence_list.append(s)
-            return sentence_list
+    def find_dim(self, comment_list):
 
         def str_dp2(str1):
             return jieba.lcut(str(str1).lower().strip())
 
-        # begin = datetime.datetime.now()
-        # print(every_comment)
-        # content_dp = cut_short_sentences(every_comment)
-        # content_cut = pd.DataFrame(every_comment).apply(str_dp2)
-        content_cut = [str_dp2(line) for line in every_comment]
+        def append_mo_gai(l, d):
+            if len(l) == 0:
+                l.append(d)
+                return l
+            s = [i['dim_desc'] for i in l]
+            s1 = d['dim_desc']
+            res = []
+            for i in range(len(s) - 1, -1, -1):
+                if str(s1).__contains__(str(s[i])) and len(s1) > len(s[i]):
+                    res.append(i)
+
+            if len(res) > 0:
+                for i in res:
+                    l.remove(l[i])
+                l.append(d)
+                return l
+
+            for i in range(len(s) - 1, -1, -1):
+                if str(s[i]).__contains__(str(s1)) and len(s[i]) > len(s1):
+                    return l
+
+            l.append(d)
+            return l
+
+        begin = datetime.datetime.now()
+
+        content_cut = [str_dp2(line) for line in comment_list]
         # print(len(content_cut))
+        # print(content_cut)
 
         result = []
-        for i in range(len(every_comment)):
-            res = {}
-            res['content'] = every_comment[i]
-            res['content_cut'] = content_cut[i]
-            res['dim'] = "null"
+        for i in range(len(content_cut)):
+            sentence_result = []
             if len(set(content_cut[i]) & self.no_re_wd_words) == 0:
-                result.append(res)
+                res = {}
+                res['content'] = comment_list[i]
+                res['content_cut'] = content_cut[i]
+                res['dim'] = ""
+                res['dim_desc'] = ""
+                res['dim_index'] = ""
+                res['dim_father'] = ""
+                res['dim_type'] = ""
+                res['weight'] = ""
+                append_mo_gai(sentence_result, res)
+                result.append(sentence_result)
                 continue
             for j in range(len(self.wd_col_2)):
                 a_round = set(content_cut[i]) & set(self.wd_col_3[j])
                 if len(a_round) > 0:
+                    res = {}
+                    res['content'] = comment_list[i]
+                    res['content_cut'] = content_cut[i]
                     res['dim'] = self.wd_col_1[j]
-                    res['dim_desc'] = str(a_round)
+                    res['dim_desc'] = str(a_round)[2:len(a_round)-3]
                     res['dim_index'] = self.wd_index[j]
-                    break
+                    res['dim_father'] = self.dim_father[j]
+                    res['dim_type'] = self.dim_type[j]
+                    res['weight'] = self.weight[j]
+                    append_mo_gai(sentence_result, res)
+                    continue
 
                 res_str = ""
                 count = 0
@@ -96,21 +130,47 @@ class DimFinder(object):
                     if self.wd_col_2[j][k] in self.dict_all_keys:
                         if len(set(self.dict_sim_word[self.wd_col_2[j][k]]) & set(content_cut[i])) != 0:
                             count += 1
-                            res_str += str(set(self.dict_sim_word[self.wd_col_2[j][k]]) & set(content_cut[i]))
+                            mid_str = str(set(self.dict_sim_word[self.wd_col_2[j][k]]) & set(content_cut[i]))
+                            res_str += mid_str[2: len(mid_str) - 2] + ","
 
                 if count == len(self.wd_col_2[j]):
+                    res = {}
+                    res['content'] = comment_list[i]
+                    res['content_cut'] = content_cut[i]
                     res['dim'] = self.wd_col_1[j]
-                    res['dim_desc'] = res_str
+                    res['dim_desc'] = res_str[0: len(res_str) - 1]
                     res['dim_index'] = self.wd_index[j]
-                    break
-            result.append(res)
+                    res['dim_father'] = self.dim_father[j]
+                    res['dim_type'] = self.dim_type[j]
+                    res['weight'] = self.weight[j]
+                    append_mo_gai(sentence_result, res)
+            if len(sentence_result) == 0:
+                res = {}
+                res['content'] = comment_list[i]
+                res['content_cut'] = content_cut[i]
+                res['dim'] = ""
+                res['dim_desc'] = ""
+                res['dim_index'] = ""
+                res['dim_father'] = ""
+                res['dim_type'] = ""
+                res['weight'] = ""
+                sentence_result.append(res)
+            result.append(sentence_result)
 
         # stop = datetime.datetime.now()
         # print("匹配维度用时：" + str(stop - begin))
-        result_df = pd.DataFrame(result)
         return result
 
 aaa = DimFinder()
-# content = np.array(pd.read_excel("C:/Users/Administrator/Desktop/autohome_bbs_2017-08-07.xlsx")['G'][0:2]).tolist()
-content = ["比亚迪宋都是我的", "是挺不错的", "相对于唐的车还可以", "都是我的奔驰", "其实都可以", "唐比宋", "我的"]
-print(aaa.find_dim(content))
+
+
+def cut_short_sentences(every_str):
+    sentence_list = []
+    for s in re.split('。|！|？|；| |>|【|】| |;|：|，|,', every_str):
+        if len(s) != 0:
+            sentence_list.append(s)
+    return sentence_list
+
+# text = ['我刚买的车', '这个车座椅按钮的做工真不错', '空调的制冷效果非常的好']
+# bbb = aaa.find_dim(text)
+# print(bbb)
