@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from keras.models import load_model
+import pymysql
 import jieba
 import datetime
 import re
@@ -23,17 +24,23 @@ class DimFinder(object):
             self.word2id = json.loads(line)
         self.max_len = 30
 
-        wd = pd.read_excel("C:/Users/Administrator/Desktop/维度20180118.xlsx", sheetname="Sheet1")
-        self.wd_index = wd['d_id']
-        self.wd_col_1 = wd['4rank']
+        conn = pymysql.connect(host='101.201.140.95', user='root', password='123456', database='byd')
+        wd = pd.read_sql(
+            "SELECT t.id, t.`name`, t.`desc`, t.description, t.link_name, t.type, t.weight FROM tb_dimension t where t.`level` = 4",
+            con=conn)
+        self.wd_sim_word = pd.read_sql(
+            "SELECT t.key, t.value FROM tb_synonyms t", con=conn)
+        conn.close()
+        self.wd_index = wd['id']
+        self.wd_col_1 = wd['name']
         wd_col_2 = wd['desc']
         wd_col_3 = wd['description']
 
         self.wd_col_2 = pd.Series(wd_col_2).apply(str_dp, sym=" ")
         self.wd_col_3 = pd.Series(wd_col_3).apply(str_dp, sym=";")
 
-        self.dim_type = wd['dim_type']
-        self.dim_father = wd['dim_father']
+        self.dim_type = wd['type']
+        self.dim_father = wd['link_name']
         self.weight = wd['weight']
 
         no_re_wd_words = []
@@ -48,7 +55,7 @@ class DimFinder(object):
 
         self.no_re_wd_words = set(no_re_wd_words)
 
-        self.wd_sim_word = pd.read_excel("C:/Users/Administrator/Desktop/维度20180118.xlsx", sheetname="Sheet2")
+        # self.wd_sim_word = pd.read_excel("C:/Users/Administrator/Desktop/维度20180118.xlsx", sheetname="Sheet2")
 
         self.dict_sim_word = {}
 
