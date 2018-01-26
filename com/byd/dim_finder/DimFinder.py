@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
+from keras.models import load_model
 import jieba
 import datetime
 import re
+import json
 
 
 class DimFinder(object):
@@ -13,8 +15,15 @@ class DimFinder(object):
             return list(str(str1).strip().lower().split(sym))
 
         begin = datetime.datetime.now()
+        self.model = load_model('C:/Users/Administrator/Desktop/model1/model_180122.h5')
         jieba.load_userdict("C:/Users/Administrator/Desktop/aaa.txt")
-        wd = pd.read_excel("C:/Users/Administrator/Desktop/维度20180116.xlsx", sheetname="Sheet1")
+
+        file = open('C:/Users/Administrator/Desktop/word2id.json', 'r')
+        for line in file.readlines():
+            self.word2id = json.loads(line)
+        self.max_len = 30
+
+        wd = pd.read_excel("C:/Users/Administrator/Desktop/维度20180118.xlsx", sheetname="Sheet1")
         self.wd_index = wd['d_id']
         self.wd_col_1 = wd['4rank']
         wd_col_2 = wd['desc']
@@ -39,7 +48,7 @@ class DimFinder(object):
 
         self.no_re_wd_words = set(no_re_wd_words)
 
-        self.wd_sim_word = pd.read_excel("C:/Users/Administrator/Desktop/维度20180116.xlsx", sheetname="Sheet2")
+        self.wd_sim_word = pd.read_excel("C:/Users/Administrator/Desktop/维度20180118.xlsx", sheetname="Sheet2")
 
         self.dict_sim_word = {}
 
@@ -59,6 +68,10 @@ class DimFinder(object):
         print("拉取维度数据用时：" + str(step1 - begin))
 
     def find_dim(self, comment_list):
+
+        def doc2num(s):
+            s = [self.word2id.get(i, 0) for i in s[:self.max_len]]
+            return s + [0] * (self.max_len - len(s))
 
         def str_dp2(str1):
             return jieba.lcut(str(str1).lower().strip())
@@ -86,6 +99,18 @@ class DimFinder(object):
 
             l.append(d)
             return l
+
+        def lstm_predict(sentence):
+            X = doc2num(sentence)
+            X = np.vstack([np.array(list(X))])
+            y = self.model.predict(X)
+            lstm_predict_result = []
+            for i in range(len(y)):
+                uniques, ids = np.unique(y[i], return_index=True)
+                for j in range(len(uniques)):
+                    if uniques[j] > 0.4:
+                        lstm_predict_result.append(ids[j]+128)
+            return lstm_predict_result
 
         begin = datetime.datetime.now()
 
@@ -155,6 +180,24 @@ class DimFinder(object):
                 res['dim_type'] = ""
                 res['weight'] = ""
                 sentence_result.append(res)
+
+            rule_index = [i['dim_index'] for i in sentence_result]
+            lstm_index = lstm_predict(content_cut[i])
+            nn_more_than_rule = [i for i in lstm_index if i not in rule_index]
+            # print(nn_more_than_rule)
+            if len(nn_more_than_rule) != 0:
+                for n in nn_more_than_rule:
+                    if n != 128:
+                        res = {}
+                        res['content'] = comment_list[i]
+                        res['content_cut'] = content_cut[i]
+                        res['dim'] = self.wd_col_1[n - 129]
+                        res['dim_desc'] = ""
+                        res['dim_index'] = n
+                        res['dim_father'] = self.dim_father[n - 129]
+                        res['dim_type'] = self.dim_type[n - 129]
+                        res['weight'] = self.weight[n - 129]
+                        sentence_result.append(res)
             result.append(sentence_result)
 
         stop = datetime.datetime.now()
@@ -171,7 +214,6 @@ def cut_short_sentences(every_str):
             sentence_list.append(s)
     return sentence_list
 
-content = np.array(pd.read_excel("C:/Users/Administrator/Desktop/autohome_bbs_2017-08-07.xlsx")['G'][300:310]).tolist()[0:2]
-text = ['我刚买的车', '动力非常棒', '按键所实现的做工还行', '自动大灯和自动雨刷都很不错']
+text = ['座椅的通风不行', '这个车座椅按钮的做工真不错', '空调的制冷效果非常的好']
 bbb = aaa.find_dim(text)
 print(bbb)
